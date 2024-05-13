@@ -5,6 +5,8 @@ import (
 
 	"github.com/529Crew/blade/internal/geyser"
 	"github.com/529Crew/blade/internal/logger"
+	"github.com/529Crew/blade/internal/sol"
+	pump_monitor_hooks "github.com/529Crew/blade/internal/systems/pump/hooks"
 	"github.com/btcsuite/btcd/btcutil/base58"
 
 	pb "github.com/529Crew/blade/internal/geyser/proto"
@@ -58,24 +60,31 @@ func sortGeyser(msg *pb.SubscribeUpdateTransaction) {
 	}
 
 	var txType string
-	// var err error
+	var err error
 
 	switch {
 	case strings.Contains(combinedLogs, "Instruction: Create") && strings.Contains(combinedLogs, "Instruction: Buy"):
 		txType = "create + buy"
-	// err = parseCreate(&notification)
 	case strings.Contains(combinedLogs, "Instruction: Create") && !strings.Contains(combinedLogs, "Instruction: Buy"):
 		txType = "create"
-	// 	err = parseCreate(&notification)
 	case !strings.Contains(combinedLogs, "Instruction: Create") && strings.Contains(combinedLogs, "Instruction: Buy"):
 		txType = "buy"
-		// err = parseBuy(msg)
 	}
-	// if err != nil {
-	// 	logger.Log.Printf("[PUMP MONITOR GEYSER]: %s - %s: %s", txType, sig[:5], err)
-	// }
 
-	if txType != "" && txType != "buy" {
-		logger.Log.Printf("[PUMP MONITOR GEYSER]: %s / %s", txType, sig)
+	if txType != "create + buy" {
+		// if txType == "" {
+		// 	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s", sig)
+		// 	return
+		// } else {
+		// 	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s / %s", txType, sig)
+		// }
+		return
+	}
+
+	tx := sol.ConvertTx(msg.Transaction.Transaction)
+
+	err = pump_monitor_hooks.ParseCreateAndBuy(tx, sig)
+	if err != nil {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, sig, err)
 	}
 }

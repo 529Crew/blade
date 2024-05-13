@@ -1,13 +1,17 @@
 package pump_monitor
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/529Crew/blade/internal/logger"
+	pump_monitor_hooks "github.com/529Crew/blade/internal/systems/pump/hooks"
 	"github.com/529Crew/blade/internal/types"
+	bin "github.com/gagliardetto/binary"
+	"github.com/gagliardetto/solana-go"
 
 	helius_ws "github.com/529Crew/blade/internal/helius/ws"
 )
@@ -80,19 +84,36 @@ func sort(msg []byte) {
 	switch {
 	case strings.Contains(combinedLogs, "Instruction: Create") && strings.Contains(combinedLogs, "Instruction: Buy"):
 		txType = "create + buy"
-	// err = parseCreate(&notification)
 	case strings.Contains(combinedLogs, "Instruction: Create") && !strings.Contains(combinedLogs, "Instruction: Buy"):
 		txType = "create"
-	// 	err = parseCreate(&notification)
 	case !strings.Contains(combinedLogs, "Instruction: Create") && strings.Contains(combinedLogs, "Instruction: Buy"):
 		txType = "buy"
-		// err = parseBuy(&notification)
 	}
-	// if err != nil {
-	// 	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, sig, err)
-	// }
 
-	if txType != "" && txType != "buy" {
-		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s / %s", txType, sig)
+	if txType != "create + buy" {
+		// if txType == "" {
+		// 	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s", sig)
+		// 	return
+		// } else {
+		// 	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s / %s", txType, sig)
+		// }
+		return
+	}
+
+	data, err := base64.StdEncoding.DecodeString(notification.Params.Result.Transaction.Transaction[0])
+	if err != nil {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, sig, err)
+		return
+	}
+
+	tx, err := solana.TransactionFromDecoder(bin.NewBinDecoder(data))
+	if err != nil {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, sig, err)
+		return
+	}
+
+	err = pump_monitor_hooks.ParseCreateAndBuy(tx, sig)
+	if err != nil {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, sig, err)
 	}
 }

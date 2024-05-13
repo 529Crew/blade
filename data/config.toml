@@ -1,2 +1,8 @@
 helius_api_key = "e8c9c319-3c25-424b-a38b-9eef1d198187"
 geyser_grpc_url = "outlearning-trachles-RMgRKfjKH0.helius-rpc.com:4001"
+
+util_rpc_url = "https://mainnet.helius-rpc.com/?api-key=e8c9c319-3c25-424b-a38b-9eef1d198187"
+rpc_url = "http://va.sharknode.xyz"
+
+jito_private_key = "453Xq2c3KyWHJLKBhjuC4yP7mrDugnRgmG73NY6dDNEB6HxKzYsUcjr8mMD2z5vQGrzpiLYmQrTrKHLD1C3DuBY9"
+jito_rpc_url = "http://va.sharknode.xyz"

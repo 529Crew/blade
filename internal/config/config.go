@@ -10,6 +10,12 @@ import (
 type Config struct {
 	HeliusApiKey  string `toml:"helius_api_key"`
 	GeyserGrpcUrl string `toml:"geyser_grpc_url"`
+
+	UtilRpcUrl string `toml:"util_rpc_url"`
+	RpcUrl     string `toml:"rpc_url"`
+
+	JitoPrivateKey string `toml:"jito_private_key"`
+	JitoRpcUrl     string `toml:"jito_rpc_url"`
 }
 
 var cfg *Config
