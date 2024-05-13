@@ -21,7 +21,7 @@ func Connect(connChans ...chan struct{}) error {
 	for {
 		u, parseErr := url.Parse(fmt.Sprintf("wss://atlas-mainnet.helius-rpc.com?api-key=%s", config.Get().HeliusApiKey))
 		if parseErr != nil {
-			return fmt.Errorf("error parsing ws url: %v", parseErr)
+			return fmt.Errorf("error parsing ws url: %s", parseErr)
 		}
 
 		logger.Log.Println("[HELIUS WS]: connecting")

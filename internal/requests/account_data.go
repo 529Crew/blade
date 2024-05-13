@@ -31,7 +31,7 @@ func GetAccountDataFast(rpcURL string, account solana.PublicKey) (*rpc.GetAccoun
 	defer fasthttp.ReleaseResponse(resp)
 
 	if timeoutErr != nil {
-		return nil, fmt.Errorf("connection error: %v", timeoutErr)
+		return nil, fmt.Errorf("connection error: %s", timeoutErr)
 	}
 
 	statusCode := resp.StatusCode()

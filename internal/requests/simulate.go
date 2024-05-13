@@ -48,7 +48,7 @@ func SimulateTxFast(rpcURL string, tx *solana.Transaction) (*SimulatedTransactio
 	defer fasthttp.ReleaseResponse(resp)
 
 	if timeoutErr != nil {
-		return nil, fmt.Errorf("connection error: %v", timeoutErr)
+		return nil, fmt.Errorf("connection error: %s", timeoutErr)
 	}
 
 	statusCode := resp.StatusCode()

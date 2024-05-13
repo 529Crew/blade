@@ -4,21 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/529Crew/blade/internal/types"
 	"github.com/valyala/fasthttp"
 )
 
-func IpfsData(uri string) (*types.IpfsResponse, error) {
-	urlSplit := strings.Split(uri, "/ipfs/")
-	if len(urlSplit) < 2 {
-		return nil, fmt.Errorf("uri invalid: %s", uri)
-	}
-
+func Coins(creator string) (*types.Coins, error) {
 	req := fasthttp.AcquireRequest()
-	req.SetRequestURI(fmt.Sprintf("https://flowgocrazy.mypinata.cloud/ipfs/%s", urlSplit[1]))
+	req.SetRequestURI(fmt.Sprintf("https://client-api-2-74b1891ee9f9.herokuapp.com/coins?offset=0&limit=100&sort=created_timestamp&order=desc&includeNsfw=false&creator=%s", creator))
 	req.Header.SetMethod(fasthttp.MethodGet)
 	req.Header.Set("Accept", "application/json")
 
@@ -39,11 +33,11 @@ func IpfsData(uri string) (*types.IpfsResponse, error) {
 
 	respBody := resp.Body()
 
-	var pfData types.IpfsResponse
-	err := json.Unmarshal(respBody, &pfData)
+	var coins types.Coins
+	err := json.Unmarshal(respBody, &coins)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal json error: %s", err)
 	}
 
-	return &pfData, nil
+	return &coins, nil
 }

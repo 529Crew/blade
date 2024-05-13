@@ -27,7 +27,7 @@ func GetAsset(mint string) (*types.GetAssetResponse, error) {
 	defer fasthttp.ReleaseResponse(resp)
 
 	if timeoutErr != nil {
-		return nil, fmt.Errorf("connection error: %v", timeoutErr)
+		return nil, fmt.Errorf("connection error: %s", timeoutErr)
 	}
 
 	statusCode := resp.StatusCode()
@@ -40,7 +40,7 @@ func GetAsset(mint string) (*types.GetAssetResponse, error) {
 	var getAssetResponse types.GetAssetResponse
 	err := json.Unmarshal(respBody, &getAssetResponse)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal json error: %v", err)
+		return nil, fmt.Errorf("unmarshal json error: %s", err)
 	}
 
 	return &getAssetResponse, nil

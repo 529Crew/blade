@@ -29,7 +29,7 @@ func TransactionSubscribe(payload *types.TransactionSubscribePayload) (txSubId i
 
 	err := wsConnection.WriteJSON(payload)
 	if err != nil {
-		return 0, fmt.Errorf("error writing transactionSubscribe to geyser: %v", err)
+		return 0, fmt.Errorf("error writing transactionSubscribe to geyser: %s", err)
 	}
 
 	/* wait for tx sub id */

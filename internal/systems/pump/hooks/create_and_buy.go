@@ -38,7 +38,7 @@ func ParseCreateAndBuy(tx *solana.Transaction, sig string) error {
 
 		createInst, ok := instruction.Impl.(*pump.Create)
 		if !ok {
-			return fmt.Errorf("error casting instruction to create: %v", err)
+			return fmt.Errorf("error casting instruction to create: %s", err)
 		}
 		createInstruction = createInst
 
@@ -59,7 +59,7 @@ func ParseCreateAndBuy(tx *solana.Transaction, sig string) error {
 
 		buyInst, ok := instruction.Impl.(*pump.Buy)
 		if !ok {
-			return fmt.Errorf("error casting instruction to buy: %v", err)
+			return fmt.Errorf("error casting instruction to buy: %s", err)
 		}
 		buyInstruction = buyInst
 
@@ -90,17 +90,23 @@ func ParseCreateAndBuy(tx *solana.Transaction, sig string) error {
 	/* get ipfs metadata */
 	metadata, err := requests.IpfsData(*createInstruction.Uri)
 	if err != nil {
-		return fmt.Errorf("error getting pf data: %v", err)
+		return fmt.Errorf("error getting pf data: %s", err)
 	}
 
-	sendCreateAndBuyWebhook(createInstruction, buyInstruction, sig, metadata)
+	/* get creator's coins */
+	coins, err := requests.Coins(createInstruction.GetUserAccount().PublicKey.String())
+	if err != nil {
+		return fmt.Errorf("error getting coins: %s", err)
+	}
+
+	sendCreateAndBuyWebhook(createInstruction, buyInstruction, sig, metadata, coins)
 
 	return nil
 }
 
 var PF_CREATE_AND_BUY_WEBHOOK = "https://discord.com/api/webhooks/1239698725174120458/DiLcFDxGIrZMXfk2nOfyN4INlS-5jH5JG0igmoKsqNweKIz_2z0_SlNCooKoVqXzenjj"
 
-func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, metadata *types.IpfsResponse) {
+func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, metadata *types.IpfsResponse, coins *types.Coins) {
 	fields := []discordwebhook.Field{
 		{
 			Name:  webhooks.StrPtr("Name"),
@@ -125,6 +131,32 @@ func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, met
 		{
 			Name:  webhooks.StrPtr("Token Address"),
 			Value: webhooks.StrPtr(fmt.Sprintf("```%s```", create.GetMintAccount().PublicKey.String())),
+		},
+	}...)
+
+	/* add dev stats */
+	totalTokens := 0
+	totalKoth := 0
+	totalRaydium := 0
+	for _, coin := range *coins {
+		totalTokens++
+
+		if coin.KingOfTheHillTimestamp != 0 {
+			totalKoth++
+		}
+
+		if coin.RaydiumPool != "" {
+			totalRaydium++
+		}
+	}
+	fields = append(fields, []discordwebhook.Field{
+		{
+			Name:  webhooks.StrPtr("Dev Address"),
+			Value: webhooks.StrPtr(fmt.Sprintf("```%s```", create.GetUserAccount().PublicKey.String())),
+		},
+		{
+			Name:  webhooks.StrPtr("Dev Token Stats"),
+			Value: webhooks.StrPtr(fmt.Sprintf("```Total %d / KOTH %d / Raydium %d```", totalTokens, totalKoth, totalRaydium)),
 		},
 	}...)
 
