@@ -1,21 +1,34 @@
 package pump_monitor
 
-import "sync"
+import (
+	"container/list"
+	"sync"
+)
 
-var seen = make(map[string]bool)
-var seenMut = sync.Mutex{}
+var (
+	queue    = list.New()
+	capacity = 100
+	mutex    sync.Mutex
+)
 
 func Seen(sig string) bool {
-	seenMut.Lock()
-	defer seenMut.Unlock()
+	mutex.Lock()
+	defer mutex.Unlock()
 
-	/* if we have seen this sig */
-	_, ok := seen[sig]
-	if ok {
-		return true
+	/* check if the sig has already been seen */
+	for e := queue.Front(); e != nil; e = e.Next() {
+		if e.Value.(string) == sig {
+			return true
+		}
 	}
 
-	/* if we havent seen this sig */
-	seen[sig] = true
+	/* if it hasnt been seen add it to the cache */
+	queue.PushBack(sig)
+
+	/* if cache exceeds capacity remove the oldest entry */
+	if queue.Len() > capacity {
+		queue.Remove(queue.Front())
+	}
+
 	return false
 }
