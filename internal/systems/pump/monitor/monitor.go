@@ -68,6 +68,13 @@ func sort(msg []byte) {
 	}
 
 	combinedLogs := strings.Join(notification.Params.Result.Transaction.Meta.LogMessages, " ")
+	sig := notification.Params.Result.Signature
+
+	/* check if we've already seen this sig */
+	seen := Seen(sig)
+	if seen {
+		return
+	}
 
 	var txType string
 	switch {
@@ -82,10 +89,10 @@ func sort(msg []byte) {
 		// err = parseBuy(&notification)
 	}
 	// if err != nil {
-	// 	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, notification.Params.Result.Signature, err)
+	// 	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, sig, err)
 	// }
 
 	if txType != "" && txType != "buy" {
-		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s / %s\n", txType, notification.Params.Result.Signature)
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s / %s", txType, sig)
 	}
 }

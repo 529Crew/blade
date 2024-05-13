@@ -34,13 +34,13 @@ func MonitorGeyser(connected chan struct{}) {
 				},
 			)
 			if err != nil {
-				logger.Log.Printf("[PUMP MONITOR GEYSER] subscription error: %s", err)
+				logger.Log.Printf("[PUMP MONITOR GEYSER]: subscription error: %s", err)
 			}
 
 			listenerId = lid
 			listener = l
 
-			logger.Log.Println("[PUMP MONITOR GEYSER] activated")
+			logger.Log.Println("[PUMP MONITOR GEYSER]: activated")
 		case msg := <-listener:
 			go sortGeyser(msg.GetTransaction())
 		}
@@ -50,6 +50,12 @@ func MonitorGeyser(connected chan struct{}) {
 func sortGeyser(msg *pb.SubscribeUpdateTransaction) {
 	combinedLogs := strings.Join(msg.Transaction.Meta.LogMessages, " ")
 	sig := base58.Encode(msg.Transaction.Signature)
+
+	/* check if we've already seen this sig */
+	seen := Seen(sig)
+	if seen {
+		return
+	}
 
 	var txType string
 	// var err error
@@ -66,10 +72,10 @@ func sortGeyser(msg *pb.SubscribeUpdateTransaction) {
 		// err = parseBuy(msg)
 	}
 	// if err != nil {
-	// 	logger.Log.Printf("[PUMP MONITOR GEYSER] %s - %s: %s", txType, sig[:5], err)
+	// 	logger.Log.Printf("[PUMP MONITOR GEYSER]: %s - %s: %s", txType, sig[:5], err)
 	// }
 
 	if txType != "" && txType != "buy" {
-		logger.Log.Printf("[PUMP MONITOR GEYSER] %s: %s\n", txType, sig)
+		logger.Log.Printf("[PUMP MONITOR GEYSER]: %s / %s", txType, sig)
 	}
 }

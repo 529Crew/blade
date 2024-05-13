@@ -7,13 +7,19 @@ import (
 )
 
 func main() {
-	/* queue up monitors */
-	pumpConn := make(chan struct{})
-	go pump_monitor.Monitor(pumpConn)
+	/* queue up helius monitors */
+	pumpConnHelius := make(chan struct{})
+	go pump_monitor.Monitor(pumpConnHelius)
 
-	/* manage geyser connections */
-	go geyser.Connect()
-	go helius_ws.Connect(pumpConn)
+	/* manage helius connection */
+	go helius_ws.Connect(pumpConnHelius)
+
+	/* queue up geyser monitors */
+	pumpConnGeyser := make(chan struct{})
+	go pump_monitor.MonitorGeyser(pumpConnGeyser)
+
+	/* manage geyser connection */
+	go geyser.Connect(pumpConnGeyser)
 
 	select {}
 }
