@@ -16,6 +16,10 @@ type Config struct {
 
 	JitoPrivateKey string `toml:"jito_private_key"`
 	JitoRpcUrl     string `toml:"jito_rpc_url"`
+
+	IpfsGatewayUri string `toml:"ipfs_gateway_uri"`
+
+	WebhooksEnabled bool `toml:"webhooks_enabled"`
 }
 
 var cfg *Config

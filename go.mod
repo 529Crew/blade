@@ -13,6 +13,7 @@ require (
 	github.com/gagliardetto/treeout v0.1.4
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.1
+	github.com/gtuk/discordwebhook v1.2.0
 	github.com/valyala/fasthttp v1.52.0
 	github.com/weeaa/jito-go v0.0.0-20240510171334-29572519ca50
 	google.golang.org/grpc v1.63.2
