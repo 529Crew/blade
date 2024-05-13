@@ -22,10 +22,10 @@ func Monitor(connected chan struct{}) {
 		case <-connected:
 			txSubId, err := txSubscribe()
 			if err != nil {
-				log.Printf("[PUMP MONITOR]: txsub error: %v\n", err)
+				log.Printf("[PUMP MONITOR HELIUS]: txsub error: %v\n", err)
 			}
 			subId = txSubId
-			logger.Log.Println("[PUMP MONITOR]: activated")
+			logger.Log.Println("[PUMP MONITOR HELIUS]: activated")
 		case msg := <-listener:
 			/* filter all msg without matching txSubId */
 			if !strings.Contains(string(msg), fmt.Sprintf(`"subscription":%d`, subId)) {
@@ -63,7 +63,7 @@ func sort(msg []byte) {
 	var notification types.TransactionNotification
 	err := json.Unmarshal(msg, &notification)
 	if err != nil {
-		log.Printf("[PUMP MONITOR]: error unmarshalling transaction notification: %v\n", err)
+		log.Printf("[PUMP MONITOR HELIUS]: error unmarshalling transaction notification: %v\n", err)
 		return
 	}
 
@@ -82,10 +82,10 @@ func sort(msg []byte) {
 		// err = parseBuy(&notification)
 	}
 	// if err != nil {
-	// 	logger.Log.Printf("[PUMP MONITOR]: %s - %s / %s", txType, notification.Params.Result.Signature, err)
+	// 	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, notification.Params.Result.Signature, err)
 	// }
 
 	if txType != "" && txType != "buy" {
-		logger.Log.Printf("[PUMP MONITOR]: %s / %s\n", txType, notification.Params.Result.Signature)
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s / %s\n", txType, notification.Params.Result.Signature)
 	}
 }

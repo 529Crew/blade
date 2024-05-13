@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	HeliusApiKey string `toml:"helius_api_key"`
+	HeliusApiKey  string `toml:"helius_api_key"`
+	GeyserGrpcUrl string `toml:"geyser_grpc_url"`
 }
 
 var cfg *Config
