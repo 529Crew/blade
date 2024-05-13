@@ -24,14 +24,14 @@ func Connect(connChans ...chan struct{}) error {
 			return fmt.Errorf("error parsing ws url: %v", parseErr)
 		}
 
-		logger.Log.Println("[HELIUS WS] connecting")
+		logger.Log.Println("[HELIUS WS]: connecting")
 		wsConnection, _, err = websocket.DefaultDialer.Dial(u.String(), nil)
 		if err != nil {
-			logger.Log.Println("[HELIUS WS] failed to connect, retrying...")
+			logger.Log.Println("[HELIUS WS]: failed to connect, retrying...")
 			time.Sleep(retryInterval)
 			continue
 		}
-		logger.Log.Println("[HELIUS WS] connected")
+		logger.Log.Println("[HELIUS WS]: connected")
 		wsConnected = true
 
 		/* alert monitors that new connection was established */
@@ -44,7 +44,7 @@ func Connect(connChans ...chan struct{}) error {
 		for {
 			_, msg, err := wsConnection.ReadMessage()
 			if err != nil {
-				logger.Log.Printf("[HELIUS WS] disconnected: %s\n", err)
+				logger.Log.Printf("[HELIUS WS]: disconnected: %s\n", err)
 				wsConnected = false
 				wsConnection.Close()
 				break
