@@ -6,28 +6,30 @@ import (
 )
 
 var (
+	seen     = make(map[string]bool)
+	seenMut  sync.Mutex
 	queue    = list.New()
 	capacity = 100
-	mutex    sync.Mutex
 )
 
 func Seen(sig string) bool {
-	mutex.Lock()
-	defer mutex.Unlock()
+	seenMut.Lock()
+	defer seenMut.Unlock()
 
-	/* check if the sig has already been seen */
-	for e := queue.Front(); e != nil; e = e.Next() {
-		if e.Value.(string) == sig {
-			return true
-		}
+	/* check if sig has been seen */
+	if _, ok := seen[sig]; ok {
+		return true
 	}
 
-	/* if it hasnt been seen add it to the cache */
+	/* if sig hasnt been seen add it to the cache */
+	seen[sig] = true
 	queue.PushBack(sig)
 
-	/* if cache exceeds capacity remove the oldest entry */
+	/* if cache exceeds capacity remove oldest entry */
 	if queue.Len() > capacity {
-		queue.Remove(queue.Front())
+		oldest := queue.Front()
+		delete(seen, oldest.Value.(string))
+		queue.Remove(oldest)
 	}
 
 	return false
