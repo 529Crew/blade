@@ -3,10 +3,10 @@ package helius_ws
 import (
 	"fmt"
 	"net/url"
-	"os"
 	"time"
 
-	"github.com/FlowGoCrazy/razor/internal/logger"
+	"github.com/529Crew/blade/internal/config"
+	"github.com/529Crew/blade/internal/logger"
 	"github.com/gorilla/websocket"
 )
 
@@ -19,7 +19,7 @@ func Connect(connChans ...chan struct{}) error {
 	var err error
 
 	for {
-		u, parseErr := url.Parse(fmt.Sprintf("wss://atlas-mainnet.helius-rpc.com?api-key=%s", os.Getenv("HELIUS_API_KEY")))
+		u, parseErr := url.Parse(fmt.Sprintf("wss://atlas-mainnet.helius-rpc.com?api-key=%s", config.Get().HeliusApiKey))
 		if parseErr != nil {
 			return fmt.Errorf("error parsing ws url: %v", parseErr)
 		}

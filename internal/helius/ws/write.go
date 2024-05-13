@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/FlowGoCrazy/razor/internal/types"
+	"github.com/529Crew/blade/internal/types"
 )
 
 var writeMutex = &sync.Mutex{}
