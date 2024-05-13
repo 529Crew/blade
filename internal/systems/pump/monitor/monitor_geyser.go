@@ -52,7 +52,7 @@ func sortGeyser(msg *pb.SubscribeUpdateTransaction) {
 	sig := base58.Encode(msg.Transaction.Signature)
 
 	var txType string
-	var err error
+	// var err error
 
 	switch {
 	case strings.Contains(combinedLogs, "Instruction: Create") && strings.Contains(combinedLogs, "Instruction: Buy"):
@@ -65,9 +65,9 @@ func sortGeyser(msg *pb.SubscribeUpdateTransaction) {
 		txType = "buy"
 		// err = parseBuy(msg)
 	}
-	if err != nil {
-		logger.Log.Printf("[PUMP MONITOR GEYSER] %s - %s: %s", txType, sig[:5], err)
-	}
+	// if err != nil {
+	// 	logger.Log.Printf("[PUMP MONITOR GEYSER] %s - %s: %s", txType, sig[:5], err)
+	// }
 
 	if txType != "" && txType != "buy" {
 		logger.Log.Printf("[PUMP MONITOR GEYSER] %s: %s\n", txType, sig)
