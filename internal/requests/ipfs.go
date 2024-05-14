@@ -12,13 +12,19 @@ import (
 )
 
 func IpfsData(uri string) (*types.IpfsResponse, error) {
-	urlSplit := strings.Split(uri, "/ipfs/")
-	if len(urlSplit) < 2 {
-		return nil, fmt.Errorf("uri invalid: %s", uri)
+	var url string
+	if strings.Contains(uri, "/ipfs/") {
+		urlSplit := strings.Split(uri, "/ipfs/")
+		if len(urlSplit) < 2 {
+			return nil, fmt.Errorf("uri invalid: %s", uri)
+		}
+		url = fmt.Sprintf("https://flowgocrazy.mypinata.cloud/ipfs/%s", urlSplit[1])
+	} else {
+		url = uri
 	}
 
 	req := fasthttp.AcquireRequest()
-	req.SetRequestURI(fmt.Sprintf("https://flowgocrazy.mypinata.cloud/ipfs/%s", urlSplit[1]))
+	req.SetRequestURI(url)
 	req.Header.SetMethod(fasthttp.MethodGet)
 	req.Header.Set("Accept", "application/json")
 

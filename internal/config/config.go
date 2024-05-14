@@ -13,11 +13,12 @@ type Config struct {
 
 	UtilRpcUrl string `toml:"util_rpc_url"`
 	RpcUrl     string `toml:"rpc_url"`
-
-	JitoPrivateKey string `toml:"jito_private_key"`
-	JitoRpcUrl     string `toml:"jito_rpc_url"`
+	JitoRpcUrl string `toml:"jito_rpc_url"`
 
 	IpfsGatewayUri string `toml:"ipfs_gateway_uri"`
+
+	JitoPrivateKey   string `toml:"jito_private_key"`
+	WalletPrivateKey string `toml:"wallet_private_key"`
 
 	WebhooksEnabled bool `toml:"webhooks_enabled"`
 }

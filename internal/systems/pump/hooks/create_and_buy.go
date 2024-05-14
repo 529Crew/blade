@@ -119,7 +119,7 @@ func ParseCreateAndBuy(tx *solana.Transaction, sig string, preBalances []int64, 
 var PF_CREATE_AND_BUY_WEBHOOK = "https://discord.com/api/webhooks/1239698725174120458/DiLcFDxGIrZMXfk2nOfyN4INlS-5jH5JG0igmoKsqNweKIz_2z0_SlNCooKoVqXzenjj"
 var PF_CREATE_AND_BUY_1RAY_WEBHOOK = "https://discord.com/api/webhooks/1239737301626785804/pRklhQfqiOAcJXEo1VY_6lZIcPSNIWUy40ngJDY_DtOF58ab-h1bij-zOkp9GSLXsg-t"
 
-func sendCreateAndBuyWebhook(create *pump.Create, sig string, metadata *types.IpfsResponse, coins *types.Coins, preSolBalance float64, postSolBalance float64, tokenBalance float64) {
+func sendCreateAndBuyWebhook(inst *pump.Create, sig string, metadata *types.IpfsResponse, coins *types.Coins, preSolBalance float64, postSolBalance float64, tokenBalance float64) {
 	fields := []discordwebhook.Field{
 		{
 			Name:  webhooks.StrPtr("Name"),
@@ -146,7 +146,7 @@ func sendCreateAndBuyWebhook(create *pump.Create, sig string, metadata *types.Ip
 	fields = append(fields, []discordwebhook.Field{
 		{
 			Name:  webhooks.StrPtr("Token Address"),
-			Value: webhooks.StrPtr(fmt.Sprintf("```%s```", create.GetMintAccount().PublicKey.String())),
+			Value: webhooks.StrPtr(fmt.Sprintf("```%s```", inst.GetMintAccount().PublicKey.String())),
 		},
 	}...)
 
@@ -158,7 +158,7 @@ func sendCreateAndBuyWebhook(create *pump.Create, sig string, metadata *types.Ip
 	foundCurrent := false
 
 	for _, coin := range *coins {
-		if coin.Mint == create.GetMintAccount().PublicKey.String() {
+		if coin.Mint == inst.GetMintAccount().PublicKey.String() {
 			foundCurrent = true
 		}
 
@@ -185,7 +185,7 @@ func sendCreateAndBuyWebhook(create *pump.Create, sig string, metadata *types.Ip
 	fields = append(fields, []discordwebhook.Field{
 		{
 			Name:  webhooks.StrPtr("Dev Address"),
-			Value: webhooks.StrPtr(fmt.Sprintf("```%s```", create.GetUserAccount().PublicKey.String())),
+			Value: webhooks.StrPtr(fmt.Sprintf("```%s```", inst.GetUserAccount().PublicKey.String())),
 		},
 		{
 			Name:  webhooks.StrPtr("Dev Coin Stats"),
@@ -203,8 +203,8 @@ func sendCreateAndBuyWebhook(create *pump.Create, sig string, metadata *types.Ip
 
 	/* add socials if available */
 	var socialsStr []string
-	socialsStr = append(socialsStr, fmt.Sprintf("[PUMP FUN](https://pump.fun/%s)", create.GetMintAccount().PublicKey.String()))
-	socialsStr = append(socialsStr, fmt.Sprintf("[PHOTON](https://photon-sol.tinyastro.io/en/lp/%s)", create.GetMintAccount().PublicKey.String()))
+	socialsStr = append(socialsStr, fmt.Sprintf("[PUMP FUN](https://pump.fun/%s)", inst.GetMintAccount().PublicKey.String()))
+	socialsStr = append(socialsStr, fmt.Sprintf("[PHOTON](https://photon-sol.tinyastro.io/en/lp/%s)", inst.GetMintAccount().PublicKey.String()))
 	if metadata.Telegram != "" {
 		if !strings.HasPrefix(metadata.Telegram, "http") {
 			metadata.Telegram = fmt.Sprintf("https://%s", metadata.Telegram)
@@ -233,16 +233,22 @@ func sendCreateAndBuyWebhook(create *pump.Create, sig string, metadata *types.Ip
 	/* add image if available */
 	var thumbnail *discordwebhook.Thumbnail = nil
 	if metadata.Image != "" {
-		urlSplit := strings.Split(metadata.Image, "/ipfs/")
-		if len(urlSplit) > 1 {
+		if strings.Contains(metadata.Image, "/ipfs/") {
+			urlSplit := strings.Split(metadata.Image, "/ipfs/")
+			if len(urlSplit) > 1 {
+				thumbnail = &discordwebhook.Thumbnail{
+					Url: webhooks.StrPtr(fmt.Sprintf("https://flowgocrazy.mypinata.cloud/ipfs/%s", urlSplit[1])),
+				}
+			}
+		} else {
 			thumbnail = &discordwebhook.Thumbnail{
-				Url: webhooks.StrPtr(fmt.Sprintf("https://flowgocrazy.mypinata.cloud/ipfs/%s", urlSplit[1])),
+				Url: webhooks.StrPtr(metadata.Image),
 			}
 		}
 	}
 
 	message := discordwebhook.Message{
-		Username:  webhooks.StrPtr("529 Monitors"),
+		Username:  webhooks.StrPtr("After Hours Monitors"),
 		AvatarUrl: webhooks.StrPtr(webhooks.AvatarURL),
 		Embeds: &[]discordwebhook.Embed{
 			{
@@ -255,7 +261,7 @@ func sendCreateAndBuyWebhook(create *pump.Create, sig string, metadata *types.Ip
 				Thumbnail: thumbnail,
 
 				Footer: &discordwebhook.Footer{
-					Text:    webhooks.StrPtr(fmt.Sprintf("529 Monitors - %s", time.Now().UTC().In(logger.TimeLocation).Format("Mon Jan 2 03:04:05 PM EST"))),
+					Text:    webhooks.StrPtr(fmt.Sprintf("After Hours Monitors - %s", time.Now().UTC().In(logger.TimeLocation).Format("Mon Jan 2 03:04:05 PM EST"))),
 					IconUrl: webhooks.StrPtr(webhooks.AvatarURL),
 				},
 			},
