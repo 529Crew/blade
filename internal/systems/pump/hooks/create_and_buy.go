@@ -10,6 +10,7 @@ import (
 	"github.com/529Crew/blade/internal/logger"
 	"github.com/529Crew/blade/internal/requests"
 	"github.com/529Crew/blade/internal/sol"
+	pump_process "github.com/529Crew/blade/internal/systems/pump/process"
 	"github.com/529Crew/blade/internal/types"
 	"github.com/529Crew/blade/internal/util"
 	"github.com/529Crew/blade/internal/webhooks"
@@ -111,7 +112,45 @@ func ParseCreateAndBuy(tx *solana.Transaction, sig string, preBalances []int64, 
 		}
 	}
 
-	sendCreateAndBuyWebhook(createInstruction, sig, metadata, coins, preSolBalance, postSolBalance, tokenBalance)
+	/* dev coin metrics */
+	totalTokens := 0
+	totalKoth := 0
+	totalRaydium := 0
+	seenMints := make(map[string]bool)
+	foundCurrent := false
+
+	for _, coin := range *coins {
+		if coin.Mint == createInstruction.GetMintAccount().PublicKey.String() {
+			foundCurrent = true
+		}
+
+		/* check if we already saw this mint */
+		_, ok := seenMints[coin.Mint]
+		if ok {
+			continue
+		}
+		seenMints[coin.Mint] = true
+
+		totalTokens++
+
+		if coin.KingOfTheHillTimestamp != 0 {
+			totalKoth++
+		}
+
+		if coin.RaydiumPool != "" {
+			totalRaydium++
+		}
+	}
+	if !foundCurrent {
+		totalTokens++
+	}
+
+	/* pre-calculate more metrics */
+	solSpent := preSolBalance - postSolBalance
+	percentOwned := (tokenBalance / 1_000_000_000) * 100
+
+	go pump_process.ProcessCreateAndBuy(createInstruction, buyInstruction, sig, metadata, postSolBalance, tokenBalance, solSpent, percentOwned, totalTokens, totalKoth, totalRaydium)
+	sendCreateAndBuyWebhook(createInstruction, sig, metadata, postSolBalance, tokenBalance, solSpent, percentOwned, totalTokens, totalKoth, totalRaydium)
 
 	return nil
 }
@@ -119,7 +158,18 @@ func ParseCreateAndBuy(tx *solana.Transaction, sig string, preBalances []int64, 
 var PF_CREATE_AND_BUY_WEBHOOK = "https://discord.com/api/webhooks/1239698725174120458/DiLcFDxGIrZMXfk2nOfyN4INlS-5jH5JG0igmoKsqNweKIz_2z0_SlNCooKoVqXzenjj"
 var PF_CREATE_AND_BUY_1RAY_WEBHOOK = "https://discord.com/api/webhooks/1239737301626785804/pRklhQfqiOAcJXEo1VY_6lZIcPSNIWUy40ngJDY_DtOF58ab-h1bij-zOkp9GSLXsg-t"
 
-func sendCreateAndBuyWebhook(inst *pump.Create, sig string, metadata *types.IpfsResponse, coins *types.Coins, preSolBalance float64, postSolBalance float64, tokenBalance float64) {
+func sendCreateAndBuyWebhook(
+	inst *pump.Create,
+	sig string,
+	metadata *types.IpfsResponse,
+	postSolBalance float64,
+	tokenBalance float64,
+	solSpent float64,
+	percentOwned float64,
+	totalTokens int,
+	totalKoth int,
+	totalRaydium int,
+) {
 	fields := []discordwebhook.Field{
 		{
 			Name:  webhooks.StrPtr("Name"),
@@ -151,37 +201,6 @@ func sendCreateAndBuyWebhook(inst *pump.Create, sig string, metadata *types.Ipfs
 	}...)
 
 	/* add dev coin stats */
-	totalTokens := 0
-	totalKoth := 0
-	totalRaydium := 0
-	seenMints := make(map[string]bool)
-	foundCurrent := false
-
-	for _, coin := range *coins {
-		if coin.Mint == inst.GetMintAccount().PublicKey.String() {
-			foundCurrent = true
-		}
-
-		/* check if we already saw this mint */
-		_, ok := seenMints[coin.Mint]
-		if ok {
-			continue
-		}
-		seenMints[coin.Mint] = true
-
-		totalTokens++
-
-		if coin.KingOfTheHillTimestamp != 0 {
-			totalKoth++
-		}
-
-		if coin.RaydiumPool != "" {
-			totalRaydium++
-		}
-	}
-	if !foundCurrent {
-		totalTokens++
-	}
 	fields = append(fields, []discordwebhook.Field{
 		{
 			Name:  webhooks.StrPtr("Dev Address"),
@@ -197,7 +216,7 @@ func sendCreateAndBuyWebhook(inst *pump.Create, sig string, metadata *types.Ipfs
 	fields = append(fields, []discordwebhook.Field{
 		{
 			Name:  webhooks.StrPtr("Dev Balances"),
-			Value: webhooks.StrPtr(fmt.Sprintf("```Spent         | %.2f SOL\nBalance       | %.2f SOL\nToken Balance | %.2f (%.2f%% Of Supply)\n```", preSolBalance-postSolBalance, postSolBalance, tokenBalance, (tokenBalance/1_000_000_000)*100)),
+			Value: webhooks.StrPtr(fmt.Sprintf("```Spent         | %.2f SOL\nBalance       | %.2f SOL\nToken Balance | %.2f (%.2f%% Of Supply)\n```", solSpent, postSolBalance, tokenBalance, percentOwned)),
 		},
 	}...)
 

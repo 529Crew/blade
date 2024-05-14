@@ -8,6 +8,8 @@ import (
 )
 
 type Config struct {
+	/* basic bot config */
+
 	HeliusApiKey  string `toml:"helius_api_key"`
 	GeyserGrpcUrl string `toml:"geyser_grpc_url"`
 
@@ -20,7 +22,24 @@ type Config struct {
 	JitoPrivateKey   string `toml:"jito_private_key"`
 	WalletPrivateKey string `toml:"wallet_private_key"`
 
+	BuyPriorityFee uint64 `toml:"buy_priority_fee"`
+
 	WebhooksEnabled bool `toml:"webhooks_enabled"`
+
+	/* token filters */
+
+	MaximumTotal   int `toml:"maximum_total"`
+	MinimumKoth    int `toml:"minimum_koth"`
+	MinimumRaydium int `toml:"minimum_raydium"`
+
+	DevMinimumSolBalance float64 `toml:"dev_minimum_sol_balance"`
+	DevMaximumPercent    float64 `toml:"dev_maximum_percent"`
+
+	WebsiteRequired  bool `toml:"website_required"`
+	TwitterRequired  bool `toml:"twitter_required"`
+	TelegramRequired bool `toml:"telegram_required"`
+
+	BannedWords []string `toml:"banned_words"`
 }
 
 var cfg *Config
