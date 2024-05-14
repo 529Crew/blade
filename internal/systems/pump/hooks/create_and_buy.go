@@ -111,7 +111,7 @@ func ParseCreateAndBuy(tx *solana.Transaction, sig string, preBalances []int64, 
 		}
 	}
 
-	sendCreateAndBuyWebhook(createInstruction, buyInstruction, sig, metadata, coins, preSolBalance, postSolBalance, tokenBalance)
+	sendCreateAndBuyWebhook(createInstruction, sig, metadata, coins, preSolBalance, postSolBalance, tokenBalance)
 
 	return nil
 }
@@ -119,7 +119,7 @@ func ParseCreateAndBuy(tx *solana.Transaction, sig string, preBalances []int64, 
 var PF_CREATE_AND_BUY_WEBHOOK = "https://discord.com/api/webhooks/1239698725174120458/DiLcFDxGIrZMXfk2nOfyN4INlS-5jH5JG0igmoKsqNweKIz_2z0_SlNCooKoVqXzenjj"
 var PF_CREATE_AND_BUY_1RAY_WEBHOOK = "https://discord.com/api/webhooks/1239737301626785804/pRklhQfqiOAcJXEo1VY_6lZIcPSNIWUy40ngJDY_DtOF58ab-h1bij-zOkp9GSLXsg-t"
 
-func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, metadata *types.IpfsResponse, coins *types.Coins, preSolBalance float64, postSolBalance float64, tokenBalance float64) {
+func sendCreateAndBuyWebhook(create *pump.Create, sig string, metadata *types.IpfsResponse, coins *types.Coins, preSolBalance float64, postSolBalance float64, tokenBalance float64) {
 	fields := []discordwebhook.Field{
 		{
 			Name:  webhooks.StrPtr("Name"),
@@ -135,7 +135,7 @@ func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, met
 	if metadata.Description != "" {
 		fields = append(fields, discordwebhook.Field{
 			Name:  webhooks.StrPtr("Description"),
-			Value: webhooks.StrPtr(fmt.Sprintf("```%s```", metadata.Description)),
+			Value: webhooks.StrPtr(fmt.Sprintf("```%s```", metadata.Description[:1024])),
 		})
 	}
 
