@@ -132,8 +132,8 @@ func sendCreateAndBuyWebhook(create *pump.Create, sig string, metadata *types.Ip
 	}
 
 	/* add description if not empty */
-	if len(metadata.Description) > 1024 {
-		metadata.Description = metadata.Description[:1024]
+	if len(metadata.Description) > 1000 {
+		metadata.Description = metadata.Description[:1000]
 	}
 	if metadata.Description != "" {
 		fields = append(fields, discordwebhook.Field{
