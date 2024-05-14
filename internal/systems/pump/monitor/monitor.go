@@ -111,8 +111,10 @@ func sort(msg []byte) {
 		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, sig, err)
 		return
 	}
+	preBalances, postBalances := notification.Params.Result.Transaction.Meta.PreBalances, notification.Params.Result.Transaction.Meta.PostBalances
+	_, postTokenBalances := notification.Params.Result.Transaction.Meta.PreTokenBalances, notification.Params.Result.Transaction.Meta.PostTokenBalances
 
-	err = pump_monitor_hooks.ParseCreateAndBuy(tx, sig)
+	err = pump_monitor_hooks.ParseCreateAndBuy(tx, sig, preBalances, postBalances, postTokenBalances)
 	if err != nil {
 		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, sig, err)
 	}

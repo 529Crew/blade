@@ -82,8 +82,10 @@ func sortGeyser(msg *pb.SubscribeUpdateTransaction) {
 	}
 
 	tx := sol.ConvertTx(msg.Transaction.Transaction)
+	preBalances, postBalances := sol.ConvertPreAndPostBalances(msg.Transaction.Meta.PreBalances, msg.Transaction.Meta.PostBalances)
+	_, postTokenBalances := sol.ConvertPreAndPostTokenBalances(msg.Transaction.Meta.PreTokenBalances, msg.Transaction.Meta.PostTokenBalances)
 
-	err = pump_monitor_hooks.ParseCreateAndBuy(tx, sig)
+	err = pump_monitor_hooks.ParseCreateAndBuy(tx, sig, preBalances, postBalances, postTokenBalances)
 	if err != nil {
 		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, sig, err)
 	}

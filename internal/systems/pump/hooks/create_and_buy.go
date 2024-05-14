@@ -17,7 +17,7 @@ import (
 	"github.com/gtuk/discordwebhook"
 )
 
-func ParseCreateAndBuy(tx *solana.Transaction, sig string) error {
+func ParseCreateAndBuy(tx *solana.Transaction, sig string, preBalances []int64, postBalances []int64, postTokenBalances []types.TokenBalance) error {
 	transaction, err := sol.ResolveAddressTables(tx)
 	if err != nil {
 		return err
@@ -99,14 +99,26 @@ func ParseCreateAndBuy(tx *solana.Transaction, sig string) error {
 		return fmt.Errorf("error getting coins: %s", err)
 	}
 
-	sendCreateAndBuyWebhook(createInstruction, buyInstruction, sig, metadata, coins)
+	/* get pre / post sol balance */
+	preSolBalance := float64(preBalances[0]) / 1_000_000_000
+	postSolBalance := float64(postBalances[0]) / 1_000_000_000
+
+	/* get token balance */
+	var tokenBalance float64 = 0
+	for _, postTokenBalance := range postTokenBalances {
+		if postTokenBalance.Owner == createInstruction.GetUserAccount().PublicKey.String() && postTokenBalance.Mint == createInstruction.GetMintAccount().PublicKey.String() {
+			tokenBalance = postTokenBalance.UITokenAmount.UIAmount
+		}
+	}
+
+	sendCreateAndBuyWebhook(createInstruction, buyInstruction, sig, metadata, coins, preSolBalance, postSolBalance, tokenBalance)
 
 	return nil
 }
 
 var PF_CREATE_AND_BUY_WEBHOOK = "https://discord.com/api/webhooks/1239698725174120458/DiLcFDxGIrZMXfk2nOfyN4INlS-5jH5JG0igmoKsqNweKIz_2z0_SlNCooKoVqXzenjj"
 
-func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, metadata *types.IpfsResponse, coins *types.Coins) {
+func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, metadata *types.IpfsResponse, coins *types.Coins, preSolBalance float64, postSolBalance float64, tokenBalance float64) {
 	fields := []discordwebhook.Field{
 		{
 			Name:  webhooks.StrPtr("Name"),
@@ -134,11 +146,25 @@ func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, met
 		},
 	}...)
 
-	/* add dev stats */
+	/* add dev coin stats */
 	totalTokens := 0
 	totalKoth := 0
 	totalRaydium := 0
+	seenMints := make(map[string]bool)
+	foundCurrent := false
+
 	for _, coin := range *coins {
+		if coin.Mint == create.GetMintAccount().PublicKey.String() {
+			foundCurrent = true
+		}
+
+		/* check if we already saw this mint */
+		_, ok := seenMints[coin.Mint]
+		if ok {
+			continue
+		}
+		seenMints[coin.Mint] = true
+
 		totalTokens++
 
 		if coin.KingOfTheHillTimestamp != 0 {
@@ -149,14 +175,25 @@ func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, met
 			totalRaydium++
 		}
 	}
+	if !foundCurrent {
+		totalTokens++
+	}
 	fields = append(fields, []discordwebhook.Field{
 		{
 			Name:  webhooks.StrPtr("Dev Address"),
 			Value: webhooks.StrPtr(fmt.Sprintf("```%s```", create.GetUserAccount().PublicKey.String())),
 		},
 		{
-			Name:  webhooks.StrPtr("Dev Token Stats"),
+			Name:  webhooks.StrPtr("Dev Coin Stats"),
 			Value: webhooks.StrPtr(fmt.Sprintf("```Total %d / KOTH %d / Raydium %d```", totalTokens, totalKoth, totalRaydium)),
+		},
+	}...)
+
+	/* add dev balances */
+	fields = append(fields, []discordwebhook.Field{
+		{
+			Name:  webhooks.StrPtr("Dev Balances"),
+			Value: webhooks.StrPtr(fmt.Sprintf("```Sol Spent %.2f\nToken Balance %.2f (%.2f%% Of Supply)\nSol Balance %.2f```", preSolBalance-postSolBalance, tokenBalance, (tokenBalance/1_000_000_000)*100, postSolBalance)),
 		},
 	}...)
 
@@ -205,7 +242,7 @@ func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, met
 		AvatarUrl: webhooks.StrPtr(webhooks.AvatarURL),
 		Embeds: &[]discordwebhook.Embed{
 			{
-				Title: webhooks.StrPtr("Pump Fun LP Live On Raydium"),
+				Title: webhooks.StrPtr("New Pump Fun Token"),
 				Url:   webhooks.StrPtr(fmt.Sprintf("https://solscan.io/tx/%s", sig)),
 				Color: webhooks.StrPtr("2303786"),
 
@@ -214,7 +251,7 @@ func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, met
 				Thumbnail: thumbnail,
 
 				Footer: &discordwebhook.Footer{
-					Text:    webhooks.StrPtr(fmt.Sprintf("529 Monitors - %s", time.Now().UTC().In(logger.TimeLocation).Format("Mon Jan_2 03:04:05 PM EST"))),
+					Text:    webhooks.StrPtr(fmt.Sprintf("529 Monitors - %s", time.Now().UTC().In(logger.TimeLocation).Format("Mon Jan 2 03:04:05 PM EST"))),
 					IconUrl: webhooks.StrPtr(webhooks.AvatarURL),
 				},
 			},

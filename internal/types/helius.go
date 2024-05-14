@@ -52,33 +52,11 @@ type TransactionNotification struct {
 							StackHeight    int    `json:"stackHeight"`
 						} `json:"instructions"`
 					} `json:"innerInstructions"`
-					LogMessages      []string `json:"logMessages"`
-					PreTokenBalances []struct {
-						AccountIndex  int    `json:"accountIndex"`
-						Mint          string `json:"mint"`
-						Owner         string `json:"owner"`
-						ProgramID     string `json:"programId"`
-						UITokenAmount struct {
-							Amount         string  `json:"amount"`
-							Decimals       int     `json:"decimals"`
-							UIAmount       float64 `json:"uiAmount"`
-							UIAmountString string  `json:"uiAmountString"`
-						} `json:"uiTokenAmount"`
-					} `json:"preTokenBalances"`
-					PostTokenBalances []struct {
-						AccountIndex  int    `json:"accountIndex"`
-						Mint          string `json:"mint"`
-						Owner         string `json:"owner"`
-						ProgramID     string `json:"programId"`
-						UITokenAmount struct {
-							Amount         string  `json:"amount"`
-							Decimals       int     `json:"decimals"`
-							UIAmount       float64 `json:"uiAmount"`
-							UIAmountString string  `json:"uiAmountString"`
-						} `json:"uiTokenAmount"`
-					} `json:"postTokenBalances"`
-					Rewards         any `json:"rewards"`
-					LoadedAddresses struct {
+					LogMessages       []string       `json:"logMessages"`
+					PreTokenBalances  []TokenBalance `json:"preTokenBalances"`
+					PostTokenBalances []TokenBalance `json:"postTokenBalances"`
+					Rewards           any            `json:"rewards"`
+					LoadedAddresses   struct {
 						Writable []any `json:"writable"`
 						Readonly []any `json:"readonly"`
 					} `json:"loadedAddresses"`
@@ -88,6 +66,21 @@ type TransactionNotification struct {
 			Signature string `json:"signature"`
 		} `json:"result"`
 	} `json:"params"`
+}
+
+type TokenBalance struct {
+	AccountIndex  int           `json:"accountIndex"`
+	Mint          string        `json:"mint"`
+	Owner         string        `json:"owner"`
+	ProgramID     string        `json:"programId"`
+	UITokenAmount UiTokenAmount `json:"uiTokenAmount"`
+}
+
+type UiTokenAmount struct {
+	Amount         string  `json:"amount"`
+	Decimals       int     `json:"decimals"`
+	UIAmount       float64 `json:"uiAmount"`
+	UIAmountString string  `json:"uiAmountString"`
 }
 
 type GetAssetResponse struct {
