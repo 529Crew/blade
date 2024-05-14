@@ -117,6 +117,7 @@ func ParseCreateAndBuy(tx *solana.Transaction, sig string, preBalances []int64, 
 }
 
 var PF_CREATE_AND_BUY_WEBHOOK = "https://discord.com/api/webhooks/1239698725174120458/DiLcFDxGIrZMXfk2nOfyN4INlS-5jH5JG0igmoKsqNweKIz_2z0_SlNCooKoVqXzenjj"
+var PF_CREATE_AND_BUY_1RAY_WEBHOOK = "https://discord.com/api/webhooks/1239737301626785804/pRklhQfqiOAcJXEo1VY_6lZIcPSNIWUy40ngJDY_DtOF58ab-h1bij-zOkp9GSLXsg-t"
 
 func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, metadata *types.IpfsResponse, coins *types.Coins, preSolBalance float64, postSolBalance float64, tokenBalance float64) {
 	fields := []discordwebhook.Field{
@@ -193,7 +194,7 @@ func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, met
 	fields = append(fields, []discordwebhook.Field{
 		{
 			Name:  webhooks.StrPtr("Dev Balances"),
-			Value: webhooks.StrPtr(fmt.Sprintf("```Sol Spent %.2f\nToken Balance %.2f (%.2f%% Of Supply)\nSol Balance %.2f```", preSolBalance-postSolBalance, tokenBalance, (tokenBalance/1_000_000_000)*100, postSolBalance)),
+			Value: webhooks.StrPtr(fmt.Sprintf("```Spent         | %.2f SOL\nBalance       | %.2f SOL\nToken Balance | %.2f (%.2f%% Of Supply)\n```", preSolBalance-postSolBalance, postSolBalance, tokenBalance, (tokenBalance/1_000_000_000)*100)),
 		},
 	}...)
 
@@ -264,6 +265,16 @@ func sendCreateAndBuyWebhook(create *pump.Create, buy *pump.Buy, sig string, met
 			if !strings.Contains(err.Error(), "rate limited") {
 				logger.Log.Println(err)
 				util.PrettyPrint(message)
+			}
+		}
+
+		if totalRaydium > 0 {
+			err := discordwebhook.SendMessage(PF_CREATE_AND_BUY_1RAY_WEBHOOK, message)
+			if err != nil {
+				if !strings.Contains(err.Error(), "rate limited") {
+					logger.Log.Println(err)
+					util.PrettyPrint(message)
+				}
 			}
 		}
 	}
