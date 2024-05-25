@@ -88,17 +88,15 @@ func sort(msg []byte) {
 		txType = "create"
 	case !strings.Contains(combinedLogs, "Instruction: Create") && strings.Contains(combinedLogs, "Instruction: Buy"):
 		txType = "buy"
+	case strings.Contains(combinedLogs, "Instruction: Sell"):
+		txType = "sell"
 	}
 
-	if txType != "create + buy" {
-		// if txType == "" {
-		// 	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s", sig)
-		// 	return
-		// } else {
-		// 	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s / %s", txType, sig)
-		// }
+	if !strings.Contains(txType, "create") {
 		return
 	}
+
+	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s / %s", txType, sig)
 
 	data, err := base64.StdEncoding.DecodeString(notification.Params.Result.Transaction.Transaction[0])
 	if err != nil {

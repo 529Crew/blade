@@ -26,6 +26,12 @@ type Config struct {
 
 	WebhooksEnabled bool `toml:"webhooks_enabled"`
 
+	/* webhooks */
+
+	SelfMonitorWebhook      string `toml:"self_monitor_webhook"`
+	PfCreateWebhook         string `toml:"pf_create_webhook"`
+	PfFilteredCreateWebhook string `toml:"pf_filtered_create_webhook"`
+
 	/* token filters */
 
 	MaximumTotal   int `toml:"maximum_total"`
@@ -40,6 +46,11 @@ type Config struct {
 	TelegramRequired bool `toml:"telegram_required"`
 
 	BannedWords []string `toml:"banned_words"`
+
+	/* tx settings */
+
+	BuyAmount   uint64 `toml:"buy_amount"`
+	BuySlippage int64  `toml:"buy_slippage"`
 }
 
 var cfg *Config

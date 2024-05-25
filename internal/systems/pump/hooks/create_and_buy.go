@@ -10,7 +10,7 @@ import (
 	"github.com/529Crew/blade/internal/logger"
 	"github.com/529Crew/blade/internal/requests"
 	"github.com/529Crew/blade/internal/sol"
-	pump_process "github.com/529Crew/blade/internal/systems/pump/process"
+	pump_tx "github.com/529Crew/blade/internal/systems/pump/tx"
 	"github.com/529Crew/blade/internal/types"
 	"github.com/529Crew/blade/internal/util"
 	"github.com/529Crew/blade/internal/webhooks"
@@ -149,14 +149,81 @@ func ParseCreateAndBuy(tx *solana.Transaction, sig string, preBalances []int64, 
 	solSpent := preSolBalance - postSolBalance
 	percentOwned := (tokenBalance / 1_000_000_000) * 100
 
-	go pump_process.ProcessCreateAndBuy(createInstruction, buyInstruction, sig, metadata, postSolBalance, tokenBalance, solSpent, percentOwned, totalTokens, totalKoth, totalRaydium)
-	sendCreateAndBuyWebhook(createInstruction, sig, metadata, postSolBalance, tokenBalance, solSpent, percentOwned, totalTokens, totalKoth, totalRaydium)
+	go sendCreateAndBuyWebhook(createInstruction, sig, metadata, postSolBalance, tokenBalance, solSpent, percentOwned, totalTokens, totalKoth, totalRaydium, config.Get().PfCreateWebhook)
+	processCreateAndBuy(createInstruction, buyInstruction, sig, metadata, postSolBalance, tokenBalance, solSpent, percentOwned, totalTokens, totalKoth, totalRaydium)
 
 	return nil
 }
 
-var PF_CREATE_AND_BUY_WEBHOOK = "https://discord.com/api/webhooks/1239698725174120458/DiLcFDxGIrZMXfk2nOfyN4INlS-5jH5JG0igmoKsqNweKIz_2z0_SlNCooKoVqXzenjj"
-var PF_CREATE_AND_BUY_1RAY_WEBHOOK = "https://discord.com/api/webhooks/1239737301626785804/pRklhQfqiOAcJXEo1VY_6lZIcPSNIWUy40ngJDY_DtOF58ab-h1bij-zOkp9GSLXsg-t"
+func processCreateAndBuy(
+	createInst *pump.Create,
+	buyInst *pump.Buy,
+	sig string,
+	metadata *types.IpfsResponse,
+	postSolBalance float64,
+	tokenBalance float64,
+	solSpent float64,
+	percentOwned float64,
+	totalTokens int,
+	totalKoth int,
+	totalRaydium int,
+) {
+	cfg := config.Get()
+	mint := createInst.GetMintAccount().PublicKey.String()
+
+	/* check koth and raydium stats */
+	if totalTokens > cfg.MaximumTotal {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - total over max", mint)
+		return
+	}
+	if totalKoth < cfg.MinimumKoth {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - koth under min", mint)
+		return
+	}
+	if totalRaydium < cfg.MinimumRaydium {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - ray under min", mint)
+		return
+	}
+
+	/* check dev info */
+	if postSolBalance < cfg.DevMinimumSolBalance {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - dev bal under min", mint)
+		return
+	}
+	if percentOwned > cfg.DevMaximumPercent {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - dev percent over max", mint)
+		return
+	}
+
+	/* check socials */
+	if cfg.WebsiteRequired && metadata.Website == "" {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - no website", mint)
+		return
+	}
+	if cfg.TwitterRequired && metadata.Twitter == "" {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - no twitter", mint)
+		return
+	}
+	if cfg.TelegramRequired && metadata.Telegram == "" {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - no telegram", mint)
+		return
+	}
+
+	/* check banned words in title / description */
+	for _, bannedWord := range cfg.BannedWords {
+		if strings.Contains(metadata.Name, bannedWord) {
+			logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - banned word found in name / %s", mint, bannedWord)
+			return
+		}
+		if strings.Contains(metadata.Description, bannedWord) {
+			logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - banned word found in description / %s", mint, bannedWord)
+			return
+		}
+	}
+
+	go sendCreateAndBuyWebhook(createInst, sig, metadata, postSolBalance, tokenBalance, solSpent, percentOwned, totalTokens, totalKoth, totalRaydium, config.Get().PfFilteredCreateWebhook)
+	pump_tx.Buy(buyInst, solSpent, tokenBalance)
+}
 
 func sendCreateAndBuyWebhook(
 	inst *pump.Create,
@@ -169,6 +236,7 @@ func sendCreateAndBuyWebhook(
 	totalTokens int,
 	totalKoth int,
 	totalRaydium int,
+	webhook string,
 ) {
 	fields := []discordwebhook.Field{
 		{
@@ -287,22 +355,14 @@ func sendCreateAndBuyWebhook(
 		},
 	}
 
-	if config.Get().WebhooksEnabled {
-		err := discordwebhook.SendMessage(PF_CREATE_AND_BUY_WEBHOOK, message)
+	cfg := config.Get()
+
+	if cfg.WebhooksEnabled {
+		err := discordwebhook.SendMessage(webhook, message)
 		if err != nil {
 			if !strings.Contains(err.Error(), "rate limited") {
 				logger.Log.Println(err)
 				util.PrettyPrint(message)
-			}
-		}
-
-		if totalRaydium > 0 {
-			err := discordwebhook.SendMessage(PF_CREATE_AND_BUY_1RAY_WEBHOOK, message)
-			if err != nil {
-				if !strings.Contains(err.Error(), "rate limited") {
-					logger.Log.Println(err)
-					util.PrettyPrint(message)
-				}
 			}
 		}
 	}

@@ -2,6 +2,7 @@ package pump_tx
 
 import (
 	"context"
+	"math/big"
 	"math/rand"
 
 	"github.com/529Crew/blade/idls/pump"
@@ -15,7 +16,9 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 )
 
-func Buy(buyInst *pump.Buy) error {
+func Buy(buyInst *pump.Buy, solSpent float64, tokenBalance float64) error {
+	cfg := config.Get()
+
 	instructions := []solana.Instruction{
 		computebudget.NewSetComputeUnitLimitInstruction(200_420).Build(),
 		computebudget.NewSetComputeUnitPriceInstruction(config.Get().BuyPriorityFee + uint64(rand.Intn(1000))).Build(),
@@ -47,10 +50,37 @@ func Buy(buyInst *pump.Buy) error {
 		}
 	}
 
+	/* get quote using bundled buy amount and sol spent */
+
+	sol_buy_amount := new(big.Int).SetUint64(cfg.BuyAmount) // amount to buy in sol
+
+	// initial_real_token_reserves := new(big.Int).SetUint64(793_100_000_000_000)
+	initial_virtual_token_reserves := new(big.Int).SetUint64(1_073_000_000_000_000)
+	initial_virtual_sol_reserves := new(big.Int).SetUint64(30_000_000_000)
+
+	tokens_bundle_bought := new(big.Int).SetUint64(uint64(tokenBalance))
+	sol_spent := new(big.Int).SetUint64(uint64(solSpent))
+
+	// real_token_reserves := new(big.Int).Sub(initial_real_token_reserves, tokens_bundle_bought)
+	virtual_token_reserves := new(big.Int).Sub(initial_virtual_token_reserves, tokens_bundle_bought)
+	virtual_sol_reserves := new(big.Int).Add(initial_virtual_sol_reserves, sol_spent)
+
+	mul_result := new(big.Int).Mul(virtual_sol_reserves, virtual_token_reserves)
+	add_result := new(big.Int).Add(virtual_sol_reserves, sol_buy_amount)
+	div_result := new(big.Int).Quo(mul_result, add_result)
+	add_result_2 := new(big.Int).Add(div_result, new(big.Int).SetUint64(1))
+	tokens_out := new(big.Int).Sub(virtual_token_reserves, add_result_2)
+
+	sol_buy_amount_percent := new(big.Int).Mul(sol_buy_amount, new(big.Int).SetInt64(cfg.BuySlippage))
+	sol_slippage := new(big.Int).Quo(sol_buy_amount_percent, new(big.Int).SetInt64(100))
+	sol_quote_with_slippage := new(big.Int).Add(sol_buy_amount, sol_slippage)
+
+	// fmt.Println("lamports + 5% slippage", sol_quote_with_slippage, "tokens", tokens_out)
+
 	instructions = append(instructions,
 		pump.NewBuyInstruction(
-			5_000_000,        /* need to figure out a way to properly calculate quote here */
-			1_000_000_000/10, /* 0.1 SOL */
+			tokens_out.Uint64(),
+			sol_quote_with_slippage.Uint64(),
 			buyInst.GetGlobalAccount().PublicKey,
 			buyInst.GetFeeRecipientAccount().PublicKey,
 			buyInst.GetMintAccount().PublicKey,

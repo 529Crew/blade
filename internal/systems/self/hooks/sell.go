@@ -89,8 +89,6 @@ func ParseSell(tx *solana.Transaction, sig string, preBalances []int64, postBala
 	return nil
 }
 
-var SELF_SELL_WEBHOOK = "https://discord.com/api/webhooks/1239965126237360221/cgS5LqfyaQnMd7hnaNE6vBBRM7uv704QkufJRRUfW9N_e5jJh8P6Bru3nD7GVb-sYS-F"
-
 func sendSellWebhook(inst *pump.Sell, sig string, mplMetadata *types.GetAssetResponse, metadata *types.IpfsResponse, tokensSpent float64, solReceived float64) {
 	fields := []discordwebhook.Field{
 		{
@@ -198,8 +196,10 @@ func sendSellWebhook(inst *pump.Sell, sig string, mplMetadata *types.GetAssetRes
 		},
 	}
 
-	if config.Get().WebhooksEnabled {
-		err := discordwebhook.SendMessage(SELF_SELL_WEBHOOK, message)
+	cfg := config.Get()
+
+	if cfg.WebhooksEnabled {
+		err := discordwebhook.SendMessage(cfg.SelfMonitorWebhook, message)
 		if err != nil {
 			if !strings.Contains(err.Error(), "rate limited") {
 				logger.Log.Println(err)

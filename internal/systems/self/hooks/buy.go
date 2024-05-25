@@ -198,8 +198,10 @@ func sendBuyWebhook(inst *pump.Buy, sig string, mplMetadata *types.GetAssetRespo
 		},
 	}
 
-	if config.Get().WebhooksEnabled {
-		err := discordwebhook.SendMessage(SELF_BUY_WEBHOOK, message)
+	cfg := config.Get()
+
+	if cfg.WebhooksEnabled {
+		err := discordwebhook.SendMessage(cfg.SelfMonitorWebhook, message)
 		if err != nil {
 			if !strings.Contains(err.Error(), "rate limited") {
 				logger.Log.Println(err)
