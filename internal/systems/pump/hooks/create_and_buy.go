@@ -174,18 +174,18 @@ func processCreateAndBuy(
 	mint := createInst.GetMintAccount().PublicKey.String()
 
 	/* check koth and raydium stats */
-	// if totalTokens > cfg.MaximumTotal {
-	// 	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - total over max", mint)
-	// 	return
-	// }
-	// if totalKoth < cfg.MinimumKoth {
-	// 	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - koth under min", mint)
-	// 	return
-	// }
-	// if totalRaydium < cfg.MinimumRaydium {
-	// 	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - ray under min", mint)
-	// 	return
-	// }
+	if totalTokens > cfg.MaximumTotal {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - total over max", mint)
+		return
+	}
+	if totalKoth < cfg.MinimumKoth {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - koth under min", mint)
+		return
+	}
+	if totalRaydium < cfg.MinimumRaydium {
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - ray under min", mint)
+		return
+	}
 
 	/* check dev info */
 	if postSolBalance < cfg.DevMinimumSolBalance {
