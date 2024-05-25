@@ -49,8 +49,10 @@ type Config struct {
 
 	/* tx settings */
 
-	BuyAmount   uint64 `toml:"buy_amount"`
-	BuySlippage int64  `toml:"buy_slippage"`
+	BuyAmount           uint64 `toml:"buy_amount"`
+	BuySlippage         int64  `toml:"buy_slippage"`
+	BloxrouteTip        uint64 `toml:"bloxroute_tip"`
+	BloxrouteAuthHeader string `toml:"bloxroute_auth_header"`
 }
 
 var cfg *Config
