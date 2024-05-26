@@ -75,10 +75,10 @@ func Buy(buyInst *pump.Buy, solSpent float64, tokenBalance float64) error {
 	sol_slippage := new(big.Int).Quo(sol_buy_amount_percent, new(big.Int).SetInt64(100))
 	sol_quote_with_slippage := new(big.Int).Add(sol_buy_amount, sol_slippage)
 
-	// fmt.Println("lamports + 5% slippage", sol_quote_with_slippage, "tokens", tokens_out)
-	logger.Log.Printf("[BUY] quote %d max lamports for %.2f tokens with %d%% slippage", sol_quote_with_slippage.Int64(), tokens_out, cfg.BuySlippage)
+	logger.Log.Printf("[BUY] quote %d max lamports for %d tokens with %d%% slippage", sol_quote_with_slippage.Int64(), tokens_out, cfg.BuySlippage)
 
 	/* generate jito tip inst */
+	logger.Log.Printf("[BUY] using %d lamports jito tip", cfg.JitoTip)
 	tipInst, err := client.GetJito().GenerateTipRandomAccountInstruction(cfg.JitoTip, constants.Wallet.PublicKey())
 	if err != nil {
 		logger.Log.Printf("[BUY] error buying mint %s: %v", mint, err)

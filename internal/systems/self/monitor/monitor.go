@@ -54,7 +54,7 @@ func txSubscribe() (txSubId int64, e error) {
 				},
 			},
 			{
-				Commitment:                     "processed",
+				Commitment:                     "confirmed",
 				Encoding:                       "base64",
 				TransactionDetails:             "full",
 				ShowRewards:                    false,

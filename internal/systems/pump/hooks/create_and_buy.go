@@ -155,7 +155,7 @@ func ParseCreateAndBuy(tx *solana.Transaction, sig string, preBalances []int64, 
 	return nil
 }
 
-// var boughtAlready bool = false
+var boughtAlready bool = false
 
 func processCreateAndBuy(
 	createInst *pump.Create,
@@ -174,18 +174,18 @@ func processCreateAndBuy(
 	mint := createInst.GetMintAccount().PublicKey.String()
 
 	/* check koth and raydium stats */
-	if totalTokens > cfg.MaximumTotal {
-		logger.Log.Printf("[FILTERED]: mint %s - total tokens over max", mint)
-		return
-	}
-	if totalKoth < cfg.MinimumKoth {
-		logger.Log.Printf("[FILTERED]: mint %s - koth under min", mint)
-		return
-	}
-	if totalRaydium < cfg.MinimumRaydium {
-		logger.Log.Printf("[FILTERED]: mint %s - ray under min", mint)
-		return
-	}
+	// if totalTokens > cfg.MaximumTotal {
+	// 	logger.Log.Printf("[FILTERED]: mint %s - total tokens over max", mint)
+	// 	return
+	// }
+	// if totalKoth < cfg.MinimumKoth {
+	// 	logger.Log.Printf("[FILTERED]: mint %s - koth under min", mint)
+	// 	return
+	// }
+	// if totalRaydium < cfg.MinimumRaydium {
+	// 	logger.Log.Printf("[FILTERED]: mint %s - ray under min", mint)
+	// 	return
+	// }
 
 	/* check dev info */
 	if postSolBalance < cfg.DevMinimumSolBalance {
@@ -225,10 +225,10 @@ func processCreateAndBuy(
 
 	go sendCreateAndBuyWebhook(createInst, sig, metadata, postSolBalance, tokenBalance, solSpent, percentOwned, totalTokens, totalKoth, totalRaydium, config.Get().PfFilteredCreateWebhook)
 
-	// if !boughtAlready {
-	// 	boughtAlready = true
-	pump_tx.Buy(buyInst, solSpent, tokenBalance)
-	// }
+	if !boughtAlready {
+		boughtAlready = true
+		pump_tx.Buy(buyInst, solSpent, tokenBalance)
+	}
 }
 
 func sendCreateAndBuyWebhook(

@@ -2,3 +2,4 @@
 *.exe
 *.zip
 data/
+logs/
