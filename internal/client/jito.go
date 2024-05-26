@@ -22,11 +22,13 @@ func init() {
 		panic(err)
 	}
 
+	cfg := config.Get()
+
 	client, err := searcher_client.New(
 		context.Background(),
 		jito_go.NewYork.BlockEngineURL,
-		rpc.New(config.Get().JitoRpcUrl),
-		rpc.New(config.Get().RpcUrl),
+		rpc.New(cfg.JitoRpcUrl),
+		rpc.New(cfg.RpcUrl),
 		jito_wallet,
 		nil,
 	)

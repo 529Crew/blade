@@ -84,19 +84,19 @@ func sort(msg []byte) {
 	}
 
 	if txType == "" {
-		logger.Log.Printf("[SELF MONITOR]: %s", sig)
+		logger.Log.Printf("[SELF MONITOR]: detected unknown tx %s", sig)
 		return
 	}
 
 	data, err := base64.StdEncoding.DecodeString(notification.Params.Result.Transaction.Transaction[0])
 	if err != nil {
-		logger.Log.Printf("[SELF MONITOR]: %s - %s / %s", txType, sig, err)
+		logger.Log.Printf("[SELF MONITOR]: error b64 decoding %s - %s / %s", txType, sig, err)
 		return
 	}
 
 	tx, err := solana.TransactionFromDecoder(bin.NewBinDecoder(data))
 	if err != nil {
-		logger.Log.Printf("[SELF MONITOR]: %s - %s / %s", txType, sig, err)
+		logger.Log.Printf("[SELF MONITOR]: error decoding %s - %s / %s", txType, sig, err)
 		return
 	}
 	preBalances, postBalances := notification.Params.Result.Transaction.Meta.PreBalances, notification.Params.Result.Transaction.Meta.PostBalances
@@ -109,6 +109,6 @@ func sort(msg []byte) {
 		err = self_monitor_hooks.ParseSell(tx, sig, preBalances, postBalances, preTokenBalances, postTokenBalances)
 	}
 	if err != nil {
-		logger.Log.Printf("[SELF MONITOR]: %s - %s / %s", txType, sig, err)
+		logger.Log.Printf("[SELF MONITOR]: error parsing %s - %s / %s", txType, sig, err)
 	}
 }

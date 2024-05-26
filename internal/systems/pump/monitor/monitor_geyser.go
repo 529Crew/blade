@@ -73,11 +73,11 @@ func sortGeyser(msg *pb.SubscribeUpdateTransaction) {
 		txType = "sell"
 	}
 
-	if !strings.Contains(txType, "create") {
+	if txType != "create + buy" {
 		return
 	}
 
-	logger.Log.Printf("[PUMP MONITOR GEYSER]: %s / %s", txType, sig)
+	logger.Log.Printf("[PUMP MONITOR GEYSER]: detected %s / %s", txType, sig)
 
 	tx := sol.ConvertTx(msg.Transaction.Transaction)
 	preBalances, postBalances := sol.ConvertPreAndPostBalances(msg.Transaction.Meta.PreBalances, msg.Transaction.Meta.PostBalances)
@@ -85,6 +85,6 @@ func sortGeyser(msg *pb.SubscribeUpdateTransaction) {
 
 	err = pump_monitor_hooks.ParseCreateAndBuy(tx, sig, preBalances, postBalances, postTokenBalances)
 	if err != nil {
-		logger.Log.Printf("[PUMP MONITOR GEYSER]: %s - %s / %s", txType, sig, err)
+		logger.Log.Printf("[PUMP MONITOR GEYSER]: error parsing %s - %s / %s", txType, sig, err)
 	}
 }

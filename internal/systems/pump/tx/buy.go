@@ -2,7 +2,6 @@ package pump_tx
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 	"math/rand"
 
@@ -11,12 +10,9 @@ import (
 	"github.com/529Crew/blade/internal/config"
 	"github.com/529Crew/blade/internal/constants"
 	"github.com/529Crew/blade/internal/logger"
-	"github.com/529Crew/blade/internal/requests"
-	bloxroute "github.com/bloXroute-Labs/solana-trader-client-go/transaction"
 	"github.com/gagliardetto/solana-go"
 	associatedtokenaccount "github.com/gagliardetto/solana-go/programs/associated-token-account"
 	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
-	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/rpc"
 )
 
@@ -30,11 +26,11 @@ func Buy(buyInst *pump.Buy, solSpent float64, tokenBalance float64) error {
 
 	mint := buyInst.GetMintAccount().PublicKey.String()
 
-	logger.Log.Printf("attempting to buy %s\n", mint)
+	logger.Log.Printf("[BUY] attempting to buy mint %s\n", mint)
 
 	associatedUser, _, err := solana.FindAssociatedTokenAddress(constants.Wallet.PublicKey(), buyInst.GetMintAccount().PublicKey)
 	if err != nil {
-		logger.Log.Printf("error buying %s: %v", mint, err)
+		logger.Log.Printf("[BUY] error buying mint %s: %v", mint, err)
 		return err
 	}
 
@@ -49,7 +45,7 @@ func Buy(buyInst *pump.Buy, solSpent float64, tokenBalance float64) error {
 				).Build(),
 			)
 		} else {
-			logger.Log.Printf("error buying %s: %v", mint, err)
+			logger.Log.Printf("[BUY] error buying mint %s: %v", mint, err)
 			return err
 		}
 	}
@@ -80,8 +76,18 @@ func Buy(buyInst *pump.Buy, solSpent float64, tokenBalance float64) error {
 	sol_quote_with_slippage := new(big.Int).Add(sol_buy_amount, sol_slippage)
 
 	// fmt.Println("lamports + 5% slippage", sol_quote_with_slippage, "tokens", tokens_out)
+	logger.Log.Printf("[BUY] quote %d max lamports for %.2f tokens with %d%% slippage", sol_quote_with_slippage.Int64(), tokens_out, cfg.BuySlippage)
+
+	/* generate jito tip inst */
+	tipInst, err := client.GetJito().GenerateTipRandomAccountInstruction(cfg.JitoTip, constants.Wallet.PublicKey())
+	if err != nil {
+		logger.Log.Printf("[BUY] error buying mint %s: %v", mint, err)
+		return err
+	}
 
 	instructions = append(instructions,
+		/* jito tip inst */
+		tipInst,
 		/* pump fun buy inst */
 		pump.NewBuyInstruction(
 			tokens_out.Uint64(),
@@ -99,13 +105,11 @@ func Buy(buyInst *pump.Buy, solSpent float64, tokenBalance float64) error {
 			buyInst.GetEventAuthorityAccount().PublicKey,
 			buyInst.GetProgramAccount().PublicKey,
 		).Build(),
-		/* bloxroute tip inst */
-		system.NewTransferInstruction(cfg.BloxrouteTip, constants.Wallet.PublicKey(), constants.BloxrouteTipAddress).Build(),
 	)
 
 	block, err := client.Get().GetRecentBlockhash(context.Background(), rpc.CommitmentFinalized)
 	if err != nil {
-		logger.Log.Printf("error buying %s: %v", mint, err)
+		logger.Log.Printf("[BUY] error buying mint %s: %v", mint, err)
 		return err
 	}
 
@@ -115,23 +119,29 @@ func Buy(buyInst *pump.Buy, solSpent float64, tokenBalance float64) error {
 		solana.TransactionPayer(constants.Wallet.PublicKey()),
 	)
 	if err != nil {
+		logger.Log.Printf("[BUY] error buying mint %s: %v", mint, err)
+		return err
+	}
+
+	if _, err = tx.Sign(
+		func(key solana.PublicKey) *solana.PrivateKey {
+			if constants.Wallet.PublicKey().Equals(key) {
+				return &constants.Wallet
+			}
+			return nil
+		},
+	); err != nil {
+		logger.Log.Printf("[BUY] error buying mint %s: %v", mint, err)
+		return err
+	}
+
+	logger.Log.Printf("[BUY] submitting jito bundle to buy mint %s\n", mint)
+	resp, err := client.GetJito().BroadcastBundle([]*solana.Transaction{tx})
+	if err != nil {
 		logger.Log.Printf("error buying %s: %v", mint, err)
 		return err
 	}
-
-	signedTx, err := bloxroute.AddMemoAndSign(tx.MustToBase64(), constants.Wallet)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	logger.Log.Printf("submitting tx to buy %s\n", mint)
-	resp, err := requests.SubmitBloxrouteTx(signedTx)
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-	logger.Log.Printf("submitted tx to buy %s: %s\n", mint, resp.Signature)
+	logger.Log.Printf("[BUY] submitted jito bundle to buy mint %s: %s\n", mint, resp.Uuid)
 
 	return nil
 }

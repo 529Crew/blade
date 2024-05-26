@@ -49,30 +49,29 @@ type Config struct {
 
 	/* tx settings */
 
-	BuyAmount           uint64 `toml:"buy_amount"`
-	BuySlippage         int64  `toml:"buy_slippage"`
-	BloxrouteTip        uint64 `toml:"bloxroute_tip"`
-	BloxrouteAuthHeader string `toml:"bloxroute_auth_header"`
+	BuyAmount   uint64 `toml:"buy_amount"`
+	BuySlippage int64  `toml:"buy_slippage"`
+	JitoTip     uint64 `toml:"jito_tip"`
 }
 
 var cfg *Config
 
 func init() {
-	logger.Log.Println("loading config from data/config.toml")
+	logger.Log.Println("[CONFIG] loading from data/config.toml")
 
 	bytes, err := os.ReadFile("data/config.toml")
 	if err != nil {
-		logger.Log.Panicf("failed to read data/config.toml: %s", err)
+		logger.Log.Panicf("[CONFIG] failed to read data/config.toml: %s", err)
 	}
 
 	var config Config
 	_, err = toml.Decode(string(bytes), &config)
 	if err != nil {
-		logger.Log.Panicf("failed to decode data/config.toml: %s", err)
+		logger.Log.Panicf("[CONFIG] failed to decode data/config.toml: %s", err)
 	}
 	cfg = &config
 
-	logger.Log.Println("loaded config from data/config.toml")
+	logger.Log.Println("[CONFIG] loaded from data/config.toml")
 }
 
 func Get() *Config {

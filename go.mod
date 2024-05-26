@@ -6,7 +6,6 @@ toolchain go1.22.3
 
 require (
 	github.com/BurntSushi/toml v1.3.2
-	github.com/bloXroute-Labs/solana-trader-client-go v1.9.4
 	github.com/btcsuite/btcd/btcutil v1.1.5
 	github.com/davecgh/go-spew v1.1.1
 	github.com/gagliardetto/binary v0.8.0

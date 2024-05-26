@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/529Crew/blade/internal/config"
 	"github.com/valyala/fasthttp"
 )
 
@@ -16,7 +15,7 @@ type SubmitBloxrouteTxResponse struct {
 }
 
 func SubmitBloxrouteTx(tx string) (*SubmitBloxrouteTxResponse, error) {
-	cfg := config.Get()
+	// cfg := config.Get()
 
 	payload := fmt.Sprintf(`{"transaction":{"content":"%s"},"frontRunningProtection":false,"useStakedRPCs":true}`, tx)
 	req := fasthttp.AcquireRequest()
@@ -24,7 +23,7 @@ func SubmitBloxrouteTx(tx string) (*SubmitBloxrouteTxResponse, error) {
 	req.Header.SetMethod(fasthttp.MethodPost)
 	req.Header.SetContentTypeBytes(headerContentTypeJson)
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", cfg.BloxrouteAuthHeader)
+	// req.Header.Set("Authorization", cfg.BloxrouteAuthHeader) /* remember to add back if using bloxroute again */
 	req.SetBodyString(payload)
 
 	resp := fasthttp.AcquireResponse()

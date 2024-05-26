@@ -155,7 +155,7 @@ func ParseCreateAndBuy(tx *solana.Transaction, sig string, preBalances []int64, 
 	return nil
 }
 
-var boughtAlready bool = false
+// var boughtAlready bool = false
 
 func processCreateAndBuy(
 	createInst *pump.Create,
@@ -175,60 +175,60 @@ func processCreateAndBuy(
 
 	/* check koth and raydium stats */
 	if totalTokens > cfg.MaximumTotal {
-		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - total over max", mint)
+		logger.Log.Printf("[FILTERED]: mint %s - total tokens over max", mint)
 		return
 	}
 	if totalKoth < cfg.MinimumKoth {
-		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - koth under min", mint)
+		logger.Log.Printf("[FILTERED]: mint %s - koth under min", mint)
 		return
 	}
 	if totalRaydium < cfg.MinimumRaydium {
-		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - ray under min", mint)
+		logger.Log.Printf("[FILTERED]: mint %s - ray under min", mint)
 		return
 	}
 
 	/* check dev info */
 	if postSolBalance < cfg.DevMinimumSolBalance {
-		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - dev bal under min", mint)
+		logger.Log.Printf("[FILTERED]: mint %s - dev bal under min", mint)
 		return
 	}
 	if percentOwned > cfg.DevMaximumPercent {
-		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - dev percent over max", mint)
+		logger.Log.Printf("[FILTERED]: mint %s - dev percent over max", mint)
 		return
 	}
 
 	/* check socials */
 	if cfg.WebsiteRequired && metadata.Website == "" {
-		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - no website", mint)
+		logger.Log.Printf("[FILTERED]: mint %s - no website", mint)
 		return
 	}
 	if cfg.TwitterRequired && metadata.Twitter == "" {
-		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - no twitter", mint)
+		logger.Log.Printf("[FILTERED]: mint %s - no twitter", mint)
 		return
 	}
 	if cfg.TelegramRequired && metadata.Telegram == "" {
-		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - no telegram", mint)
+		logger.Log.Printf("[FILTERED]: mint %s - no telegram", mint)
 		return
 	}
 
 	/* check banned words in title / description */
 	for _, bannedWord := range cfg.BannedWords {
 		if strings.Contains(metadata.Name, bannedWord) {
-			logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - banned word found in name / %s", mint, bannedWord)
+			logger.Log.Printf("[FILTERED]: mint %s - banned word found in name / %s", mint, bannedWord)
 			return
 		}
 		if strings.Contains(metadata.Description, bannedWord) {
-			logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - banned word found in description / %s", mint, bannedWord)
+			logger.Log.Printf("[FILTERED]: mint %s - banned word found in description / %s", mint, bannedWord)
 			return
 		}
 	}
 
 	go sendCreateAndBuyWebhook(createInst, sig, metadata, postSolBalance, tokenBalance, solSpent, percentOwned, totalTokens, totalKoth, totalRaydium, config.Get().PfFilteredCreateWebhook)
 
-	if !boughtAlready {
-		boughtAlready = true
-		pump_tx.Buy(buyInst, solSpent, tokenBalance)
-	}
+	// if !boughtAlready {
+	// 	boughtAlready = true
+	pump_tx.Buy(buyInst, solSpent, tokenBalance)
+	// }
 }
 
 func sendCreateAndBuyWebhook(

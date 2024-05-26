@@ -92,21 +92,21 @@ func sort(msg []byte) {
 		txType = "sell"
 	}
 
-	if !strings.Contains(txType, "create") {
+	if txType != "create + buy" {
 		return
 	}
 
-	logger.Log.Printf("[PUMP MONITOR HELIUS]: %s / %s", txType, sig)
+	logger.Log.Printf("[PUMP MONITOR HELIUS]: detected %s / %s", txType, sig)
 
 	data, err := base64.StdEncoding.DecodeString(notification.Params.Result.Transaction.Transaction[0])
 	if err != nil {
-		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, sig, err)
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: error b64 decoding %s - %s / %s", txType, sig, err)
 		return
 	}
 
 	tx, err := solana.TransactionFromDecoder(bin.NewBinDecoder(data))
 	if err != nil {
-		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, sig, err)
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: error decoding %s - %s / %s", txType, sig, err)
 		return
 	}
 	preBalances, postBalances := notification.Params.Result.Transaction.Meta.PreBalances, notification.Params.Result.Transaction.Meta.PostBalances
@@ -114,6 +114,6 @@ func sort(msg []byte) {
 
 	err = pump_monitor_hooks.ParseCreateAndBuy(tx, sig, preBalances, postBalances, postTokenBalances)
 	if err != nil {
-		logger.Log.Printf("[PUMP MONITOR HELIUS]: %s - %s / %s", txType, sig, err)
+		logger.Log.Printf("[PUMP MONITOR HELIUS]: error parsing %s - %s / %s", txType, sig, err)
 	}
 }
